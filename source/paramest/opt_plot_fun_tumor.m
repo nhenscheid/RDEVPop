@@ -1,12 +1,13 @@
 function stop = opt_plot_fun_tumor(x,optimValues,state,fig,n,time,h)
 
 nx = length(x); 
-nk = (nx-2)/2; 
+nk = (nx-1)/2; 
 Lplot = LumpyBgnd; 
 
 Lplot.centers = [x(1:nk),x((nk+1):2*nk)]; 
 Lplot.b       = x(2*nk+1);
-Lplot.cov     = x(end); 
+Lplot.cov     = 5e-4;
+%Lplot.cov     = x(end); 
 [~,gbarplot,~] = compute_gaussian_image_lumpy(Lplot,h);
 
 figure(fig); 

@@ -42,7 +42,7 @@ end
 %% Lumpy growth function rho(x,y)
 % Construct lumpy background object.  Can set parameters here or later w/
 % e.g. L.Kbar, L.cov, etc.
-L_rho = LumpyBgnd('N',Ngrid+2,'Kbar',200,'b',0.25,'cov',0.002);
+L_rho = LumpyBgnd('N',Ngrid+2,'Kbar',200,'b',0.1,'cov',0.002);
 
 % Plot a sample from the growth function
 if(plotting)
@@ -88,22 +88,29 @@ plot(n0,1:10);
 Mx = 64;
 My = 64;
 
-image_FWHM  = 0.1;  % cm (0.1=1mm)
+image_FWHM  = 0.05;  % cm (0.1=1mm)
 image_sigma = image_FWHM/(2*sqrt(2*log(2)));
 image_amp   = 1/(2*pi*image_sigma^2);
 blur_kernel = @(x,y,x0,y0) image_amp*exp(-(1/(2*image_sigma^2))*((x-x0).^2 + (y-y0).^2));
-quantum_yield = 1e-4; % Prob. that a cell emits light (scale factor). 
-
+quantum_yield = 1; % Number of photons detected per cell
+tumor_scale_factor = 1; 
 
 image_time = 5; 
+
+idx = 190:2:316;
+idy = 190:2:316; 
+
+%n0.cell_density = n0.cell_density./tumor_scale_factor;
+
 tic
-[g,gbar,h_mat] = compute_gaussian_image_tumor(n0,blur_kernel,image_time,quantum_yield);
+[g,gbar,h_mat] = compute_gaussian_image_tumor(n0,blur_kernel,image_time,quantum_yield,idx,idy);
 fprintf('Time to compute image = %f\n',toc); 
 
-
 %
+xplot = linspace(0,1,Ngrid);
 subplot(2,2,1);
-plot(n0,image_time);colorbar; title('Object');
+imagesc(xplot,xplot,n0.cell_density(:,:,image_time)); set(gca,'YDir','normal'); axis image; title('Original tumor'); 
+
 subplot(2,2,2);
 imagesc(h_mat);axis image;set(gca,'YDir','normal');title('Blur Kernel');
 subplot(2,2,3);
@@ -122,51 +129,72 @@ L.TurnOffWarnings;
 %xmin = -3*sqrt(L.cov(1,1));
 xmin = 0; 
 
-K_recon = 10;
-L.centers = rand(K_recon,2);
+K_recon = 10^2;
+
+[cx,cy] = meshgrid(linspace(0.45,0.6,sqrt(K_recon)));
+
+L.centers = [cx(:),cy(:)];
 
 % Use this to start at a random initial condition
 % L.centers = xmin + (1-2*xmin)*rand(L0.K,2);
 
 % Use this to start at the MLE point 
 
-X0 = [0.2+0.5*rand(2*K_recon,1);1e4*ones(K_recon,1);1e-3];
+
+% Optimize centers, b and single sigma
+%X0 = [0.2+0.5*rand(2*K_recon,1);1e4*ones(K_recon,1);1e-3];
+% Optimize centers, single b and single sigma
+%X0 = [0.4+0.2*rand(2*K_recon,1);1e4;1e-4];
+% Optimize centers and b, fix sigma
+%X0 = [0.4+0.2*rand(2*K_recon,1);1e4];
 % dx = 1/(K_recon+1); 
 % [x_init,y_init] = meshgrid(dx:dx:(1-dx)); 
 % X0 = [x_init(:);y_init(:);rand(2,1)];  
-L.centers = [X0(1:K_recon),X0((K_recon+1):2*K_recon)]; 
-L.b       = X0((2*K_recon+1):3*K_recon);
-L.cov     = X0(end); 
+
+% Optimize only b, fix sigma and fix centers on a grid
+X0 = [1e6*ones(K_recon,1)];
+
+%L.centers = [X0(1:K_recon),X0((K_recon+1):2*K_recon)]; 
+%L.b       = X0((2*K_recon+1):3*K_recon);
+L.b = X0(1:K_recon);
+%L.cov     = 0.0005; 
+L.cov = (L.centers(2,2) - L.centers(1,2))^2/8;
 optplotfig = figure; 
 subplot(2,3,1); imagesc(n0.cell_density(:,:,image_time)); set(gca,'YDir','normal'); axis image; colorbar; 
 subplot(2,3,2); plot(L);  colorbar; 
 subplot(2,3,4); imagesc(gbar);set(gca,'YDir','normal'); axis image;colorbar; title('Original gbar'); 
 subplot(2,3,5); imagesc(g);set(gca,'YDir','normal'); axis image; drawnow;    title('Original g'); 
 
-objfun = @(X) poiss_obj_fun_tumor(g,X,L,blur_kernel,quantum_yield);
-maxiter = 50000; 
+objfun = @(X) poiss_obj_fun_tumor_centers_fixed(g,X,L,blur_kernel,quantum_yield,idx,idy);
+maxfeval = 50000; 
+maxiter  = 500; 
 
-%options = optimoptions(@fmincon,'Display','iter-detailed','MaxFunctionEvaluations',maxiter,'Algorithm','interior-point','OptimalityTolerance',1e-8,'OutputFcn',@(x,optimValues,state)opt_plot_fun_tumor(x,optimValues,state,optplotfig,n0,image_time,blur_kernel));
-options = optimoptions(@fmincon,'Display','iter-detailed','MaxFunctionEvaluations',maxiter,'Algorithm','interior-point','OptimalityTolerance',1e-8);
+options = optimoptions(@fmincon,'Display','iter-detailed','MaxFunctionEvaluations',maxfeval,'MaxIterations',maxiter,'Algorithm','interior-point','OptimalityTolerance',1e-8,'OutputFcn',@(x,optimValues,state)opt_plot_fun_tumor_centers_fixed(x,optimValues,state,optplotfig,n0,L,image_time,blur_kernel,idx,idy));
+%options = optimoptions(@fmincon,'Display','iter-detailed','MaxFunctionEvaluations',maxfeval,'MaxIterations',maxiter,'Algorithm','interior-point','OptimalityTolerance',1e-8);
 
-LB = [0*ones(2*K_recon,1);zeros(K_recon,1);0];
-UB = [ones(2*K_recon,1);1e9*ones(K_recon,1);.1]; 
+%LB = [0.2*ones(2*K_recon,1);zeros(K_recon,1);0];
+%LB = [0.2*ones(2*K_recon,1);0;0];
+%LB = [0.2*ones(2*K_recon,1);0];
+%UB = [0.8*ones(2*K_recon,1);1e9];
+%UB = [0.8*ones(2*K_recon,1);1e9;.005]; 
+%UB = [0.8*ones(2*K_recon,1);1e9*ones(K_recon,1);.1]; 
+LB = zeros(K_recon,1); 
+UB = [1e9*ones(K_recon,1)]; 
 optTime = tic;
 Xstar = fmincon(objfun,X0,[],[],[],[],LB,UB,[],options);
 fprintf('Time elapsed = %f\n',toc(optTime)); 
 
 %%
-L = LumpyBgnd; 
-L.centers = [Xstar(1:K_recon),Xstar((K_recon+1):2*K_recon)]; 
-L.b       = Xstar(2*K_recon+1);
-L.cov     = Xstar(end); 
+%n0.cell_density = tumor_scale_factor*n0.cell_density
+L.b       = Xstar;
 L.N = 512; % Can increase # eval points for display
+[~,gbarstar,~] = compute_gaussian_image_lumpy(L,blur_kernel); 
 figure; 
-subplot(2,2,1); imagesc(n0.cell_density(:,:,image_time)); set(gca,'YDir','normal'); axis image;  title('Original object'); 
-subplot(2,2,2); plot(L);  title('Approx. maximum likelihood estimate') 
-subplot(2,2,3); 
-imagesc(gbar); axis image; colorbar; set(gca,'YDir','normal'); title('Mean image'); 
-subplot(2,2,4); 
+subplot(2,3,1); imagesc(n0.cell_density(:,:,image_time)); set(gca,'YDir','normal'); axis image;  title('Original object'); 
+subplot(2,3,2); plot(L);  title('Approx. maximum likelihood estimate') 
+subplot(2,3,3); imagesc(gbarstar); axis image; colorbar; set(gca,'YDir','normal'); title('Mean image (MLE)'); 
+subplot(2,3,4); imagesc(gbar); axis image; colorbar; set(gca,'YDir','normal'); title('Mean image (orig.)'); 
+subplot(2,3,5); 
 imagesc(g); axis image; colorbar; set(gca,'YDir','normal'); title('Noisy image'); 
 
 %%

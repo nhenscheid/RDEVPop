@@ -1,4 +1,4 @@
-function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h)
+function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h,idx,idy)
 
 % Assume that f is a lumpy background
 % h is a function handle 
@@ -7,8 +7,8 @@ function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h)
     N_eval   = f.N; 
     f.N = N_fine;
     % These are hard-coded for now
-    idx = 1:8:512;
-    idy = 1:8:512; 
+    %idx = 1:8:512;
+    %idy = 1:8:512; 
     %idx = 64:x_step:442;
     %idy = 64:y_step:442;
     xp = linspace(0,1,N_fine);

@@ -1,4 +1,4 @@
-function [g,gbar,h_mat] = compute_gaussian_image_tumor(n,h,t,Q)
+function [g,gbar,h_mat] = compute_gaussian_image_tumor(n,h,t,Q,idx,idy)
 
 % Assume that n is an RDESolutionPath
 % h is a function handle (the blur kernel/PSF)
@@ -7,8 +7,8 @@ function [g,gbar,h_mat] = compute_gaussian_image_tumor(n,h,t,Q)
 
     n_arr    = Q*n.cell_density(:,:,t);  
     mt = length(t); 
-    idx = 1:8:512;
-    idy = 1:8:512; 
+    %idx = 1:8:512;
+    %idy = 1:8:512; 
     mx = length(idx); 
     my = length(idy); 
 
