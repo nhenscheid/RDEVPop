@@ -22,7 +22,7 @@
 close all
 %% Set up sample storage
 % Number of samples to generate
-Nsamp = 64;
+Nsamp = input('How many samples per parameter choice?'); 
 %% Set up spatial grid
 Ngrid = 128;       % Number of grid points in ea. direction
 h = 1/(Ngrid+1);
