@@ -1,4 +1,4 @@
-function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h,idx,idy)
+function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h,idx,idy,Q)
 
 % Assume that f is a lumpy background
 % h is a function handle 
@@ -21,7 +21,7 @@ function [g,gbar,h_mat] = compute_gaussian_image_lumpy(f,h,idx,idy)
     h_idy = 193:320;
     h_mat  = h_mat(h_idx,h_idy);  % Makes the convolution faster.
 
-    u0 = f.Eval; 
+    u0 = Q*f.Eval; 
     gbar = dx^2*conv2(u0,h_mat,'same');
     gbar = gbar(idx,idy);
 

@@ -1,4 +1,9 @@
 function [n,rho,kappa,D] = Sample(obj,N,T,which_to_rand)
+    
+    if(nargin<4)
+        which_to_rand = struct('rho',1,'kappa',1,'D',1); 
+    end
+
     % Generate N sample paths
     % Each element of n is an RDESolutionPath object
     n = cell(N,1);

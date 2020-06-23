@@ -6,6 +6,7 @@ function [g,gbar,h_mat] = compute_gaussian_image_tumor(n,h,t,Q,idx,idy)
 % idx and idy are the measurement indices in ea. direction (x,y)
 
     n_arr    = Q*n.cell_density(:,:,t);  
+    n_arr    = n_arr(2:end-1,2:end-1);   % 512x512!  Output of RDE is 514x514. 
     mt = length(t); 
     %idx = 1:8:512;
     %idy = 1:8:512; 
