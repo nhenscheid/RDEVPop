@@ -72,6 +72,6 @@ for irhob = 1:nrho_samples
     end
 end
 %% Save
-save('Results.mat',Nfinal); 
+save('param_sweep_results.mat','Nfinal'); 
 
 fprintf('Done!\n');

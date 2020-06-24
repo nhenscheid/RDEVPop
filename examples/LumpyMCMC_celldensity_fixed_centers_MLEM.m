@@ -12,7 +12,7 @@ xx = linspace(0,1,Ngrid+2);
 [x,y] = meshgrid(xx);  % Uniform grid on [0,1]^2  (Spatial units are cm)
 
 %% Time grid
-Nt = 50;        % Number of time points to keep 
+Nt = 10;        % Number of time points to keep 
 tmax = 365;   % Time (days)
 t = linspace(0,tmax,Nt);
 
@@ -95,10 +95,10 @@ blur_kernel = @(x,y,x0,y0) image_amp*exp(-(1/(2*image_sigma^2))*((x-x0).^2 + (y-
 quantum_yield = 1e-3; % Number of photons detected per cell
 tumor_scale_factor = 1; 
 
-image_time = 5; 
+image_time = 8; 
 
-idx = 190:2:316;
-idy = 200:2:326; 
+idx = 155:3:345;
+idy = 160:3:350; 
 
 if((length(idx)~=Mx)||(length(idy)~=My))
     error('idx or idy is incorrect size!'); 
@@ -133,7 +133,7 @@ xmin = 0;
 
 K_recon = 25^2;
 
-[cx,cy] = meshgrid(linspace(0.4,0.6,sqrt(K_recon)));
+[cx,cy] = meshgrid(linspace(0.3,0.7,sqrt(K_recon)));
 L.centers = [cx(:),cy(:)];
 L.cov = (L.centers(2,2) - L.centers(1,2))^2/4;
 L.N = 512; 
@@ -159,7 +159,7 @@ end
 gadj = H'*g(:); 
 %%
 L.N = 256;   % For display purposes only
-niter = 2000; 
+niter = 20000; 
 reltol = 1e-7;
 mle_plotting = 1; 
 theta0 = gadj;  
