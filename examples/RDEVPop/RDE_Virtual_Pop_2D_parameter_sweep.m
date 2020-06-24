@@ -30,7 +30,7 @@ xx = linspace(0,1,Ngrid+2);
 [x,y] = meshgrid(xx);  % Uniform grid on [0,1]^2  (Spatial units are cm)
 %% Set up time grid
 Nt = 2;        % Number of time points to keep (only need 2 for this study)
-tmax = 365;   % Time (days)
+tmax = input('How many days to simulate?');   % Time (days)
 t = linspace(0,tmax,Nt);
 %%
 disp('Generating initial condition and random coefficient fields');
@@ -42,8 +42,8 @@ u0 = initcond(x,y,0.5,0.5);
 %% Lumpy isotropic diffusion coefficient D(x,y)
 L_D     = LumpyBgnd('N',Ngrid+2,'Kbar',20,'b',1e-7,'cov',0.04);
 %% Lumpy growth function rho(x,y)
-nrho_samples = 4; 
-rhob         = linspace(0.1,1,nrho_samples); 
+nrho_samples = input('How many parameter samples?'); 
+rhob         = linspace(0.05,0.5,nrho_samples); 
 rhocov       = linspace(0.001,0.003,nrho_samples); 
 L_rho   = LumpyBgnd('N',Ngrid+2,'Kbar',200,'b',0.25,'cov',0.002);
 %% Lumpy carrying cap function
